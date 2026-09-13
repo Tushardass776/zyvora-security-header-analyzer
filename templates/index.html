@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zyvora — Website Security Inspector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- HEADER -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                    <path d="M16 3L26 7V14C26 21 22 26 16 29C10 26 6 21 6 14V7L16 3Z"
+                          fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M11.5 16L14.5 19L21 12.5"
+                          fill="none" stroke="currentColor" stroke-width="1.8"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <div>
+                <div class="brand-name">ZYVORA</div>
+                <div class="brand-subtitle">SECURITY MADE CLEAR</div>
+            </div>
+        </div>
+
+        <div class="tool-id">WEB INTELLIGENCE</div>
+    </header>
+
+<!-- INTRO -->
+    <section class="intro">
+        <div class="eyebrow">HTTP SECURITY INSPECTION</div>
+
+        <h1>Security Header<br>Analyzer</h1>
+
+        <p class="intro-text">
+            Inspect a website's HTTP response headers and understand
+            the security protections configured by the server.
+        </p>
+    </section>
+
+
+    <!-- SCANNER -->
+    <section class="scanner" id="scanner">
+
+        <form method="POST">
+
+            <label for="url">TARGET URL</label>
+
+            <div class="url-input-row">
+
+                <div class="url-input-wrapper">
+
+                    <svg class="url-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="8.5"
+                                fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M3.8 12H20.2"
+                              fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M12 3.5C14.3 5.8 15.3 8.7 15.3 12C15.3 15.3 14.3 18.2 12 20.5"
+                              fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M12 3.5C9.7 5.8 8.7 8.7 8.7 12C8.7 15.3 9.7 18.2 12 20.5"
+                              fill="none" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+
+                    <input
+                        type="text"
+                        id="url"
+                        name="url"
+                        placeholder="example.com"
+                        value="{{ url }}"
+                        required
+                    >
+                </div>
+
+                <button type="submit">
+                    ANALYZE
+
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 12H18"
+                              fill="none" stroke="currentColor" stroke-width="1.7"
+                              stroke-linecap="round"/>
+                        <path d="M13 7L18 12L13 17"
+                              fill="none" stroke="currentColor" stroke-width="1.7"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+
+            </div>
+
+        </form>
+
+        <div class="scanner-meta">
+            <span>PASSIVE INSPECTION</span>
+            <span>6 SECURITY CONTROLS</span>
+            <span>HTTP RESPONSE</span>
+        </div>
+
+    </section>
+
+
+    <!-- ERROR -->
+    {% if error %}
+
+    <div class="error-box">
+
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3L21 20H3L12 3Z"
+                  fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linejoin="round"/>
+            <path d="M12 9V14"
+                  fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="0.8" fill="currentColor"/>
+        </svg>
+
+        <div>
+            <strong>SCAN FAILED</strong>
+            <p>{{ error }}</p>
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    {% if security_results %}
+
+    <main class="results" id="report">
+
+        <!-- REPORT HEADER -->
+        <section class="inspection-heading">
+
+            <div>
+                <div class="section-label">SECURITY INSPECTION</div>
+
+                <h2>Inspection Report</h2>
+
+                <div class="target">
+                    {{ url }}
+                </div>
+            </div>
+
+            <div class="response-info">
+                <span>HTTP RESPONSE</span>
+                <strong>{{ status_code }}</strong>
+            </div>
+
+        </section>
+
+
+        <section class="security-summary">
+            <div class="summary-main">
+                <div class="section-label">WHAT DOES THIS MEAN?</div>
+                <h2>{{ security_summary.headline }}</h2>
+                <p>{{ security_summary.message }}</p>
+                {% if security_summary.issue_count > 0 %}
+                <div class="summary-callout"><strong>Start here:</strong> The recommendations below are ordered so you can work through the most important improvements first.</div>
+                {% else %}
+                <div class="summary-callout summary-good"><strong>Good result:</strong> No header fixes are currently required by this analyzer.</div>
+                {% endif %}
+            </div>
+            <div class="summary-score"><span>YOUR SCORE</span><strong>{{ security_score }}<small>/100</small></strong><div class="summary-grade">{{ grade }} · {{ grade_label }}</div></div>
+        </section>
+
+        {% if security_summary.priority_items %}
+        <section class="next-steps">
+            <div class="section-label">YOUR NEXT STEPS</div>
+            <h2>Fix these first</h2>
+            <div class="next-step-list">
+                {% for item in security_summary.priority_items %}
+                <a class="next-step" href="#control-{{ item.name|replace(' ', '-') }}"><span class="next-step-number">0{{ loop.index }}</span><span><strong>{{ item.plain_name }}</strong><small>{{ item.action }}</small></span><span class="next-step-arrow">→</span></a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+
+        <!-- OVERVIEW -->
+        <section class="overview-grid">
+
+            <div class="grade-panel">
+
+                <div class="panel-label">SECURITY GRADE</div>
+
+                <div class="grade-letter grade-{{ grade|lower }}">
+                    {{ grade }}
+                </div>
+
+                <div class="grade-label">
+                    {{ grade_label }}
+                </div>
+
+                <div class="grade-description">
+                    {% if grade == "S" %}
+                        Excellent security-header coverage.
+                    {% elif grade == "A" %}
+                        Strong security-header coverage with minor
+                        areas for improvement.
+                    {% elif grade == "B" %}
+                        Most inspected protections are configured,
+                        but some improvements are recommended.
+                    {% elif grade == "C" %}
+                        Several security protections require attention.
+                    {% elif grade == "D" %}
+                        Important security protections are missing
+                        or incorrectly configured.
+                    {% else %}
+                        Critical security-header protections are
+                        largely absent.
+                    {% endif %}
+                </div>
+
+            </div>
+
+
+            <div class="summary-panel">
+
+                <div class="panel-label">INSPECTION SUMMARY</div>
+
+                <div class="summary-grid">
+
+                    <div class="summary-item">
+                        <span>VERIFIED</span>
+                        <strong>
+                            {{ security_results | selectattr("status", "equalto", "Present") | list | length }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>REVIEW</span>
+                        <strong>
+                            {{ security_results | selectattr("status", "equalto", "Weak") | list | length }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>NOT DETECTED</span>
+                        <strong>
+                            {{ security_results | selectattr("status", "equalto", "Missing") | list | length }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>CONTROLS</span>
+                        <strong>{{ security_results|length }}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- METHODOLOGY -->
+        <section class="methodology" id="methodology">
+
+            <div>
+                <div class="section-label">METHODOLOGY</div>
+                <h2>What is being checked?</h2>
+            </div>
+
+            <p>
+                The analyzer examines six commonly used HTTP security headers.
+                Each control is classified according to its presence and,
+                where applicable, its configuration. The result is intended
+                as a quick security-header assessment, not a complete
+                security audit.
+            </p>
+
+        </section>
+
+
+        <!-- CONTROLS -->
+        <section class="controls-section" id="controls">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-label">SECURITY CONTROLS</div>
+                    <h2>Header Inspection</h2>
+                </div>
+
+                <div class="control-count">
+                    {{ security_results|length }} CHECKS
+                </div>
+
+            </div>
+
+
+            {% for item in security_results %}
+
+            <article class="control-row" id="control-{{ item.name|replace(' ', '-') }}">
+
+                <div class="control-number">
+                    {{ "%02d"|format(loop.index) }}
+                </div>
+
+
+                <div class="control-icon">
+
+                    {% if item.name == "Content-Security-Policy" %}
+
+                    <svg viewBox="0 0 32 32" aria-hidden="true">
+                        <rect x="7" y="4" width="18" height="24" rx="1"
+                              fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M12 11L9.5 16L12 21"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M20 11L22.5 16L20 21"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+
+                    {% elif item.name == "Strict-Transport-Security" %}
+
+                    <svg viewBox="0 0 32 32" aria-hidden="true">
+                        <rect x="8" y="14" width="16" height="13" rx="2"
+                              fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M11 14V10C11 7.2 13.2 5 16 5C18.8 5 21 7.2 21 10V14"
+                              fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="16" cy="20" r="1.5"
+                                fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M16 21.5V24"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round"/>
+                    </svg>
+
+                    {% elif item.name == "X-Content-Type-Options" %}
+
+                    <svg viewBox="0 0 32 32" aria-hidden="true">
+                        <rect x="8" y="5" width="16" height="22" rx="1"
+                              fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M12 11H20"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round"/>
+                        <path d="M12 15H18"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round"/>
+                        <path d="M12 21L14.5 23.5L20 18"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+
+                    {% elif item.name == "X-Frame-Options" %}
+
+                    <svg viewBox="0 0 32 32" aria-hidden="true">
+                        <rect x="5" y="7" width="22" height="18" rx="2"
+                              fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M5 12H27"
+                              fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="9" cy="9.5" r="0.8" fill="currentColor"/>
+                        <circle cx="12" cy="9.5" r="0.8" fill="currentColor"/>
+                        <path d="M11 18L14 21L21 14"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+
+                    {% elif item.name == "Referrer-Policy" %}
+
+                    <svg viewBox="0 0 32 32" aria-hidden="true">
+                        <circle cx="16" cy="16" r="10"
+                                fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M16 10V16L20 19"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+
+                    {% elif item.name == "Permissions-Policy" %}
+
+                    <svg viewBox="0 0 32 32" aria-hidden="true">
+                        <path d="M7 10H25"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round"/>
+                        <path d="M7 16H25"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round"/>
+                        <path d="M7 22H25"
+                              fill="none" stroke="currentColor" stroke-width="1.5"
+                              stroke-linecap="round"/>
+                        <circle cx="13" cy="10" r="2"
+                                fill="#f5f6f4" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="20" cy="16" r="2"
+                                fill="#f5f6f4" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="11" cy="22" r="2"
+                                fill="#f5f6f4" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="control-main">
+
+                    <div class="control-top">
+
+                        <h3>{{ item.name }}</h3>
+
+                        {% if item.status == "Present" %}
+                            <span class="status status-present">VERIFIED</span>
+                        {% elif item.status == "Weak" %}
+                            <span class="status status-weak">REVIEW</span>
+                        {% else %}
+                            <span class="status status-missing">NOT DETECTED</span>
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- SHORT DESCRIPTION -->
+                    <p class="control-description">
+
+                        {% if item.name == "Content-Security-Policy" %}
+                            Controls which scripts, images, frames and other
+                            resources a browser is allowed to load.
+
+                        {% elif item.name == "Strict-Transport-Security" %}
+                            Tells browsers to communicate with the website
+                            using HTTPS.
+
+                        {% elif item.name == "X-Content-Type-Options" %}
+                            Prevents browsers from incorrectly guessing the
+                            type of downloaded content.
+
+                        {% elif item.name == "X-Frame-Options" %}
+                            Controls whether the website can be displayed
+                            inside another website's frame.
+
+                        {% elif item.name == "Referrer-Policy" %}
+                            Controls how much information about the previous
+                            page is shared with another website.
+
+                        {% elif item.name == "Permissions-Policy" %}
+                            Controls access to browser features such as the
+                            camera, microphone, location and sensors.
+                        {% endif %}
+
+                    </p>
+
+
+                    <!-- EXPLANATION -->
+                    <div class="control-explanation">
+
+                        <div class="explanation-label">
+                            SECURITY EXPLANATION
+                        </div>
+
+                        {% if item.name == "Content-Security-Policy" %}
+
+                            {% if item.status == "Present" %}
+                            <p>
+                                This website has configured a Content Security
+                                Policy. It restricts which sources the browser
+                                can trust when loading scripts and other
+                                resources, helping reduce the risk of malicious
+                                content and cross-site scripting attacks.
+                            </p>
+                            {% else %}
+                            <p>
+                                This website does not provide a Content Security
+                                Policy. Adding one can help restrict untrusted
+                                scripts and other resources.
+                            </p>
+                            {% endif %}
+
+
+                        {% elif item.name == "Strict-Transport-Security" %}
+
+                            {% if item.status == "Present" %}
+                            <p>
+                                This website tells browsers to use HTTPS for
+                                future connections. This helps protect users
+                                from insecure HTTP connections.
+                            </p>
+                            {% else %}
+                            <p>
+                                This website does not provide Strict-Transport-
+                                Security. Adding HSTS can help ensure browsers
+                                continue using HTTPS.
+                            </p>
+                            {% endif %}
+
+
+                        {% elif item.name == "X-Content-Type-Options" %}
+
+                            {% if item.status == "Present" %}
+                            <p>
+                                The website prevents browsers from guessing
+                                the type of a file. This helps reduce the risk
+                                of incorrectly interpreted content.
+                            </p>
+                            {% elif item.status == "Weak" %}
+                            <p>
+                                The header is present, but its current value
+                                is not the recommended configuration.
+                            </p>
+                            {% else %}
+                            <p>
+                                This website does not prevent browsers from
+                                guessing file types.
+                            </p>
+                            {% endif %}
+
+
+                        {% elif item.name == "X-Frame-Options" %}
+
+                            {% if item.status == "Present" %}
+                            <p>
+                                The website controls whether its pages can be
+                                displayed inside another website's frame.
+                                This helps protect against clickjacking.
+                            </p>
+                            {% elif item.status == "Weak" %}
+                            <p>
+                                The header is present, but its value is not
+                                one of the recommended configurations.
+                            </p>
+                            {% else %}
+                            <p>
+                                This website does not specify whether its pages
+                                can be embedded in frames.
+                            </p>
+                            {% endif %}
+
+
+                        {% elif item.name == "Referrer-Policy" %}
+
+                            {% if item.status == "Present" %}
+                            <p>
+                                The website controls how much information about
+                                the previous page is shared when a user follows
+                                a link.
+                            </p>
+                            {% elif item.status == "Weak" %}
+                            <p>
+                                A Referrer-Policy is present, but the selected
+                                value may share more referring information than
+                                recommended.
+                            </p>
+                            {% else %}
+                            <p>
+                                This website does not specify how referring
+                                information should be shared.
+                            </p>
+                            {% endif %}
+
+
+                        {% elif item.name == "Permissions-Policy" %}
+
+                            {% if item.status == "Present" %}
+                            <p>
+                                The website controls access to browser features
+                                such as the camera, microphone, location and
+                                sensors.
+                            </p>
+                            {% else %}
+                            <p>
+                                This website does not provide a Permissions-
+                                Policy. Adding one can help control which
+                                browser features are available.
+                            </p>
+                            {% endif %}
+
+                        {% endif %}
+
+                    </div>
+
+
+                    {% if item.status == "Present" %}
+                    <div class="result-good"><strong>WHAT THIS MEANS FOR YOU</strong><p>This protection was detected and passed this tool's check. No action is required for this specific header right now.</p></div>
+                    {% else %}
+                    <div class="fix-box">
+                        <div class="fix-heading"><span class="fix-number">FIX</span><strong>What should I do?</strong></div>
+                        <p class="fix-action">{{ item.action }}</p>
+                        <div class="solution-label">STARTER CONFIGURATION</div>
+                        <pre class="solution-code"><code>{{ item.solution }}</code></pre>
+                        <p class="solution-note">{{ item.solution_note }}</p>
+                        <div class="fix-footer">
+                            <a href="{{ item.practical_url }}" target="_blank" rel="noopener noreferrer">
+                                Practical security guide →
+                            </a>
+                            <span class="guide-separator">·</span>
+                            <a href="{{ item.technical_url }}" target="_blank" rel="noopener noreferrer">
+                                Technical reference →
+                            </a>
+                        </div>
+                    </div>
+                    {% if item.status == "Weak" %}
+                    <div class="detected-value"><span>DETECTED VALUE</span><code>{{ item.value }}</code></div>
+                    {% endif %}
+                    {% endif %}
+
+                </div>
+
+            </article>
+
+            {% endfor %}
+
+        </section>
+
+
+        <!-- RAW HEADERS -->
+        <section class="raw-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-label">TECHNICAL DATA</div>
+                    <h2>Raw Response Headers</h2>
+                </div>
+
+                <div class="control-count">
+                    {{ headers|length }} HEADERS
+                </div>
+
+            </div>
+
+            <p class="raw-intro">
+                Complete values returned by the server. This section is
+                provided for technical verification.
+            </p>
+
+            <div class="raw-headers">
+
+                {% for key, value in headers.items() %}
+
+                <div class="raw-header-row">
+
+                    <div class="raw-header-name">
+                        {{ key }}
+                    </div>
+
+                    <div class="raw-header-value">
+                        {{ value }}
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+    {% endif %}
+
+
+        <section class="help-section" id="guidance">
+            <div><div class="section-label">IF YOU MANAGE THIS WEBSITE</div><h2>Where do I put these fixes?</h2></div>
+            <div class="help-content">
+                <p>These settings normally belong on the web server, reverse proxy, hosting platform, or application configuration that sends the website's HTTP response. The exact location depends on how the website is hosted.</p>
+                <div class="help-grid">
+                    <div><strong>Apache</strong><span>Often configured with server header rules or .htaccess.</span></div>
+                    <div><strong>Nginx</strong><span>Often configured with <code>add_header</code> rules.</span></div>
+                    <div><strong>Cloud / hosting</strong><span>Look for HTTP response-header or security-header settings.</span></div>
+                    <div><strong>Web application</strong><span>Some frameworks and middleware can send these headers directly.</span></div>
+                </div>
+                <p class="help-warning"><strong>Important:</strong> Do not paste every example blindly. Make one change, test the website, then scan it again here.</p>
+            </div>
+        </section>
+
+        <section class="scope-note"><div class="section-label">IMPORTANT</div><p>This analyzer checks HTTP security headers only. A high score does not prove that a website is free from vulnerabilities, malware, insecure code, weak passwords, outdated software, or other security problems. A low score does not mean the website is hacked; it means this tool found missing or weak browser-level header protections.</p></section>
+
+
+    <!-- FOOTER -->
+    <footer>
+
+        <div>ZYVORA</div>
+
+        <div>PASSIVE HTTP INSPECTION</div>
+
+    </footer>
+
+</div>
+
+{% if security_results %}
+<script>
+    // After a scan, land at the beginning of the report instead of
+    // restoring the browser's previous scroll position deeper in the page.
+    window.addEventListener("load", function () {
+        const report = document.getElementById("report");
+        if (!report) return;
+
+        requestAnimationFrame(function () {
+            const top = report.getBoundingClientRect().top + window.scrollY - 24;
+            window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+        });
+    });
+</script>
+{% endif %}
+
+</body>
+</html>
