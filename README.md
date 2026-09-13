@@ -9,7 +9,7 @@ The application allows a user to enter a website URL, retrieves its response hea
 ## Live Demo
 
 **Live Application:**  
-https://zyvora-security-header-analyzer.vercel.app
+https://zyvora-sha.vercel.app
 
 ---
 
